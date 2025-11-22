@@ -1,6 +1,6 @@
 async function load() {
   try {
-    const res = await fetch('/public/accounts.json'); 
+    const res = await fetch('/accounts.json'); 
     const data = await res.json();
 
     const container = document.getElementById('container');
