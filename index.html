@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Roblox Dashboard — Picco</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#07080b;
+      --card:#0f1720;
+      --muted:rgba(230,238,248,0.7);
+      --glass: rgba(255,255,255,0.03);
+      --online:#4ade80;
+      --offline:#fb7185;
+      --idle:#facc15;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial; margin:0; background:
+         radial-gradient(1200px 400px at 10% 10%, rgba(96,165,250,0.06), transparent),
+         radial-gradient(1000px 300px at 90% 90%, rgba(110,231,183,0.03), transparent),
+         var(--bg); color:#e6eef8; -webkit-font-smoothing:antialiased;}
+    header{display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid rgba(255,255,255,0.03);}
+    .logo{width:54px;height:54px;border-radius:10px;overflow:hidden;flex:0 0 54px;border:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent)}
+    .logo img{width:100%;height:100%;object-fit:cover}
+    h1{font-size:18px;margin:0}
+    .sub{color:var(--muted);font-size:13px}
+    .container{max-width:1100px;margin:28px auto;padding:0 20px}
+    .controls{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .search{background:var(--card);border:1px solid rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;color:var(--muted);min-width:260px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:14px;border-radius:12px;backdrop-filter:blur(6px);transition:transform .15s ease,box-shadow .15s ease}
+    .card:hover{transform:translateY(-6px);box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    .row{display:flex;align-items:center;gap:12px}
+    .avatar{width:56px;height:56px;border-radius:10px;flex:0 0 56px;border:1px solid rgba(255,255,255,0.03)}
+    .name{font-weight:600}
+    .small{font-size:12px;color:var(--muted)}
+    .status{margin-left:auto;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+    .online{background:rgba(74,222,128,0.12);color:var(--online)}
+    .offline{background:rgba(251,113,133,0.06);color:var(--offline)}
+    .idle{background:rgba(250,204,21,0.08);color:var(--idle)}
+    .meta{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--muted);font-size:13px}
+    footer{text-align:center;color:var(--muted);padding:26px 0}
+    @media (max-width:600px){header{padding:12px} .controls{flex-direction:column;align-items:stretch;gap:10px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <!-- path to uploaded image (kept as provided) -->
+      <img src="/mnt/data/Screenshot 2025-11-22 124043.png" alt="logo">
+    </div>
+    <div>
+      <h1>ROBLOX FISH-IT Dashboard</h1>
+      <div class="sub">Monitor semua akunmu — realtime & elegan</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="controls">
+      <input id="q" class="search" placeholder="Cari username atau label..." />
+      <div class="small" id="info">Memuat...</div>
+    </div>
+
+    <div id="grid" class="grid" role="list" aria-live="polite">
+      <!-- cards injected here -->
+    </div>
+
+    <footer>
+      Dibuat untuk Picco • Auto-refresh setiap 5 detik • Last update: <span id="ts">-</span>
+    </footer>
+  </main>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const info = document.getElementById('info');
+    const q = document.getElementById('q');
+    const ts = document.getElementById('ts');
+
+    async function fetchStatus(){
+      try{
+        const res = await fetch('/status');
+        if(!res.ok) throw new Error('Failed to fetch /status');
+        return await res.json();
+      }catch(e){
+        console.error(e);
+        return null;
+      }
+    }
+
+    function avatarUrl(id){
+      return `https://www.roblox.com/headshot-thumbnail/image?userId=${id}&width=150&height=150&format=png`;
+    }
+
+    function render(accounts){
+      grid.innerHTML = '';
+      if(!accounts || accounts.length===0){
+        grid.innerHTML = `<div class="small">Tidak ada akun.</div>`;
+        return;
+      }
+      accounts.forEach(a => {
+        const s = a;
+        const stateClass = s.online ? 'online' : (s.error ? 'offline' : 'offline');
+        const place = s.place || '-';
+        const last = s.lastSeen || '-';
+        const avatar = s.avatarUrl || avatarUrl(s.id);
+
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `
+          <div class="row">
+            <img class="avatar" src="${avatar}" alt="avatar">
+            <div style="min-width:0">
+              <div class="name">${s.username || s.label || s.id}</div>
+              <div class="small">${s.label}</div>
+            </div>
+            <div class="status ${stateClass}">${s.online ? 'ONLINE' : (s.error ? 'ERROR' : 'OFFLINE')}</div>
+          </div>
+          <div class="meta">
+            <div>📍 ${place}</div>
+            <div>⏱ ${last}</div>
+            <div>🔄 <span class="small">${s.checkedAt ? new Date(s.checkedAt).toLocaleTimeString() : '-'}</span></div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+    }
+
+    let latest = null;
+    async function loadAndRender(){
+      info.textContent = 'Memuat...';
+      const data = await fetchStatus();
+      if(!data){ info.textContent = 'Gagal memuat'; return; }
+      ts.textContent = new Date(data.now).toLocaleString();
+      latest = data.accounts || [];
+      render(latest);
+      info.textContent = `${latest.length} akun`;
+    }
+
+    q.addEventListener('input', (e)=>{
+      const term = e.target.value.toLowerCase().trim();
+      if(!latest) return;
+      const filtered = latest.filter(a => ((a.username||'')+''+ (a.label||'')).toLowerCase().includes(term));
+      render(filtered);
+    });
+
+    // initial load
+    loadAndRender();
+    // poll every 5s
+    setInterval(loadAndRender, 5000);
+  </script>
+</body>
+</html>
