@@ -1,6 +1,6 @@
 async function load() {
   try {
-    const res = await fetch('/accounts.json'); 
+    const res = await fetch('/accounts.json'); // HARUS root, bukan /public/
     const data = await res.json();
 
     const container = document.getElementById('container');
