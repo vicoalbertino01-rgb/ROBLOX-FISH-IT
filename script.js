@@ -1,18 +1,25 @@
-async function load(){
-  try{
-    const res = await fetch('/public/accounts.json');
+async function load() {
+  try {
+    const res = await fetch('/public/accounts.json'); 
     const data = await res.json();
-    const c = document.getElementById('container');
-    c.innerHTML='';
-    data.accounts.forEach(acc=>{
-      const div=document.createElement('div');
-      div.className='card';
-      div.innerText=acc.username + ' (ID: ' + acc.userid + ')';
-      c.appendChild(div);
+
+    const container = document.getElementById('container');
+    container.innerHTML = '';
+
+    data.accounts.forEach(acc => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <strong>${acc.username}</strong><br>
+        UserID: ${acc.userid}
+      `;
+      container.appendChild(div);
     });
-  }catch(e){
-    document.getElementById('container').innerText='Gagal memuat akun.';
+
+  } catch (err) {
+    document.getElementById('container').innerText = 'Gagal memuat data akun!';
   }
 }
+
 load();
-setInterval(load,5000);
+setInterval(load, 5000);
